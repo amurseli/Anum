@@ -142,11 +142,10 @@ for paso in pasos_d:
 ## 2A.
 ## ----------------------
 
-paso_p2 = 2**-6   # 1/64 de mes
+paso_p2 = 2**-6  
 
 tiempos, estados = euler([1.0, 0.0, 0.0], paso_p2, 60, parametros)
 
-# Quedarse solo con el último año (meses 48 a 60)
 ultimo_anio = tiempos >= 48
 t_ult = tiempos[ultimo_anio]
 temp_ult = estados[ultimo_anio, 0]
@@ -158,7 +157,7 @@ P_min = np.min(precip_ult)
 P_med = np.mean(precip_ult)
 severidad = (P_max - P_min) / P_med
 
-# Desfase: momento del máximo de T, y máximo de P posterior a ese momento
+# Desfas e
 t_max_temp = t_ult[np.argmax(temp_ult)]
 despues = t_ult >= t_max_temp
 t_max_precip = t_ult[despues][np.argmax(precip_ult[despues])]
