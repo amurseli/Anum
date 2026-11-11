@@ -116,7 +116,7 @@ print(f"{pasos[0]:>10.5f} | {errores[0]:>12.6f} | {'-':>8}")
 for i in range(1, len(pasos)):
     if pasos[i] > 1:      #2 no converge
         break
-    p = np.log(errores[i] / errores[i - 1]) / np.log(2)
+    p = np.log(errores[i] / errores[i - 1]) / np.log(2) #revisar ec
     print(f"{pasos[i]:>10.5f} | {errores[i]:>12.6f} | {p:>8.3f}")
 
 
@@ -137,3 +137,60 @@ for paso in pasos_d:
     error = np.max(np.abs(estados[:comunes, 0] - temp_ref_coincidente[:comunes]))
 
     print(f"{paso:>8.4f} | {error:>12.4g} | {error / paso:>10.4f}")
+
+## ----------------------
+## 2A.
+## ----------------------
+
+paso_p2 = 2**-6   # 1/64 de mes
+
+tiempos, estados = euler([1.0, 0.0, 0.0], paso_p2, 60, parametros)
+
+# Quedarse solo con el último año (meses 48 a 60)
+ultimo_anio = tiempos >= 48
+t_ult = tiempos[ultimo_anio]
+temp_ult = estados[ultimo_anio, 0]
+precip_ult = estados[ultimo_anio, 2]
+
+# Severidad de la lluvia
+P_max = np.max(precip_ult)
+P_min = np.min(precip_ult)
+P_med = np.mean(precip_ult)
+severidad = (P_max - P_min) / P_med
+
+# Desfase: momento del máximo de T, y máximo de P posterior a ese momento
+t_max_temp = t_ult[np.argmax(temp_ult)]
+despues = t_ult >= t_max_temp
+t_max_precip = t_ult[despues][np.argmax(precip_ult[despues])]
+desfase = t_max_precip - t_max_temp
+
+print(f"P_max = {P_max:.4f}, P_min = {P_min:.4f}, P_med = {P_med:.4f}")
+print(f"Severidad S_P = {severidad:.4f}")
+print(f"Máximo de T en t = {t_max_temp:.3f}, máximo de P en t = {t_max_precip:.3f}")
+print(f"Desfase = {desfase:.3f} meses")
+
+fig, ejes = plt.subplots(3, 1, figsize=(8, 7), sharex=True)
+nombres = ["T [°C]", "H [u.h.]", "P [u.p.]"]
+colores = ["tab:red", "tab:blue", "tab:green"]
+for i in range(3):
+    ejes[i].plot(tiempos, estados[:, i], color=colores[i])
+    ejes[i].set_ylabel(nombres[i])
+    ejes[i].axvspan(48, 60, color="gray", alpha=0.15)   # marca el último año
+    ejes[i].grid(alpha=0.3)
+ejes[2].set_xlabel("Tiempo [meses]")
+fig.suptitle("Solución con parámetros nominales (h = 1/64)")
+fig.tight_layout()
+fig.savefig("parte2a_completo.png", dpi=200)
+
+fig, ejes = plt.subplots(3, 1, figsize=(8, 7), sharex=True)
+for i in range(3):
+    ejes[i].plot(t_ult, estados[ultimo_anio, i], color=colores[i])
+    ejes[i].set_ylabel(nombres[i])
+    ejes[i].grid(alpha=0.3)
+ejes[0].axvline(t_max_temp, color="tab:red", linestyle="--")
+ejes[2].axvline(t_max_precip, color="tab:green", linestyle="--")
+ejes[2].set_xlabel("Tiempo [meses]")
+fig.suptitle("Último ciclo anual (48 ≤ t ≤ 60)")
+fig.tight_layout()
+fig.savefig("parte2a_ultimo_anio.png", dpi=200)
+plt.show()
